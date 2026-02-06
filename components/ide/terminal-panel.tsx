@@ -10,36 +10,22 @@ interface TermLine {
 }
 
 const terminalOutput: TermLine[] = [
-  { text: "$ gdpr-scanner --watch src/services/user-service.ts", color: "hsl(220,10%,70%)", delay: 0 },
-  { text: "", color: "", delay: 0.5 },
-  { text: "[scanner] Initializing GDPR compliance scan...", color: "hsl(210,100%,56%)", delay: 1.5 },
-  { text: "[scanner] Analyzing AST for hardcoded secrets...", color: "hsl(210,100%,56%)", delay: 2.5 },
-  { text: "", color: "", delay: 3 },
-  { text: "  CRITICAL  Line 5: Hardcoded database host in source code", color: "hsl(0,72%,65%)", delay: 3.2 },
-  { text: "  CRITICAL  Line 6: Hardcoded database password detected", color: "hsl(0,72%,65%)", delay: 3.7 },
-  { text: "  CRITICAL  Line 7: Hardcoded API secret key (live credential)", color: "hsl(0,72%,65%)", delay: 4.2 },
-  { text: "", color: "", delay: 5 },
-  { text: "[scanner] Scanning for PII exposure patterns...", color: "hsl(210,100%,56%)", delay: 5.5 },
-  { text: "", color: "", delay: 6 },
-  { text: "  HIGH  Line 12: SSN field stored without encryption (Art. 32)", color: "hsl(30,100%,65%)", delay: 6.5 },
-  { text: "  HIGH  Line 14: Credit card data unencrypted (Art. 32)", color: "hsl(30,100%,65%)", delay: 7 },
-  { text: "  MEDIUM  Line 19: SELECT * over-fetches sensitive PII (Art. 5)", color: "hsl(45,100%,60%)", delay: 8 },
-  { text: "", color: "", delay: 9 },
-  { text: "[scanner] Checking for PII logging / exposure...", color: "hsl(210,100%,56%)", delay: 9.5 },
-  { text: "", color: "", delay: 10 },
-  { text: "  CRITICAL  Line 23: SSN logged to console (Art. 5(1)(f))", color: "hsl(0,72%,65%)", delay: 10 },
-  { text: "  CRITICAL  Line 24: Credit card logged to console (Art. 5(1)(f))", color: "hsl(0,72%,65%)", delay: 10.5 },
-  { text: "  HIGH  Line 27: SSN stored in localStorage unencrypted (Art. 32)", color: "hsl(30,100%,65%)", delay: 11.5 },
-  { text: "  HIGH  Line 28: CC stored in localStorage unencrypted (Art. 32)", color: "hsl(30,100%,65%)", delay: 12 },
-  { text: "", color: "", delay: 13 },
-  { text: "[scanner] Checking consent & data retention...", color: "hsl(210,100%,56%)", delay: 13.5 },
-  { text: "", color: "", delay: 14 },
-  { text: "  HIGH  Line 31: Email sent without consent check (Art. 7)", color: "hsl(30,100%,65%)", delay: 14.5 },
-  { text: "  MEDIUM  Line 37: No data retention policy (Art. 17 Right to Erasure)", color: "hsl(45,100%,60%)", delay: 15.5 },
-  { text: "  MEDIUM  Line 38: Soft-delete retains PII indefinitely (Art. 17)", color: "hsl(45,100%,60%)", delay: 16 },
-  { text: "", color: "", delay: 17 },
-  { text: "[scanner] Scan complete: 5 critical, 5 high, 3 medium violations found", color: "hsl(0,72%,65%)", delay: 17.5 },
-  { text: "[scanner] GDPR compliance: FAIL", color: "hsl(0,72%,65%)", delay: 18 },
+  { text: "$ npm run dev", color: "hsl(220,10%,70%)", delay: 0 },
+  { text: "", color: "", delay: 0.3 },
+  { text: "> my-project@0.1.0 dev", color: "hsl(220,10%,50%)", delay: 0.5 },
+  { text: "> next dev --turbopack", color: "hsl(220,10%,50%)", delay: 0.6 },
+  { text: "", color: "", delay: 0.8 },
+  { text: "  ▲ Next.js 16.0.1 (Turbopack)", color: "hsl(0,0%,90%)", delay: 1.2 },
+  { text: "  - Local:        http://localhost:3000", color: "hsl(220,10%,55%)", delay: 1.4 },
+  { text: "  - Network:      http://192.168.1.42:3000", color: "hsl(220,10%,55%)", delay: 1.5 },
+  { text: "", color: "", delay: 1.7 },
+  { text: " ✓ Starting...", color: "hsl(160,60%,45%)", delay: 2 },
+  { text: " ✓ Ready in 1.2s", color: "hsl(160,60%,45%)", delay: 2.8 },
+  { text: "", color: "", delay: 3.2 },
+  { text: " ○ Compiling /services/user-service ...", color: "hsl(220,10%,55%)", delay: 3.5 },
+  { text: " ✓ Compiled /services/user-service in 340ms", color: "hsl(160,60%,45%)", delay: 4.5 },
+  { text: " ○ Compiling /dashboard ...", color: "hsl(220,10%,55%)", delay: 6 },
+  { text: " ✓ Compiled /dashboard in 180ms", color: "hsl(160,60%,45%)", delay: 7 },
 ];
 
 export function TerminalPanel() {
@@ -55,13 +41,13 @@ export function TerminalPanel() {
   }, []);
 
   return (
-    <div className="h-44 bg-[hsl(220,14%,8%)] border-t border-border flex flex-col">
+    <div className="h-36 bg-[hsl(220,14%,8%)] border-t border-border flex flex-col">
       {/* Terminal header */}
       <div className="flex items-center h-8 px-3 border-b border-border shrink-0">
         <div className="flex items-center gap-3 text-[11px]">
-          <span className="text-foreground border-b border-foreground pb-1 px-1">Problems</span>
+          <span className="text-muted-foreground px-1">Problems</span>
           <span className="text-muted-foreground px-1">Output</span>
-          <span className="text-muted-foreground px-1">Terminal</span>
+          <span className="text-foreground border-b border-foreground pb-1 px-1">Terminal</span>
           <span className="text-muted-foreground px-1">Debug Console</span>
         </div>
         <div className="ml-auto flex items-center gap-1">

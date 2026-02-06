@@ -7,7 +7,6 @@ import {
   Bug,
   Blocks,
   Settings,
-  ShieldAlert,
   UserCircle,
 } from "lucide-react";
 
@@ -17,7 +16,6 @@ const topIcons = [
   { icon: GitBranch, label: "Source Control" },
   { icon: Bug, label: "Run and Debug" },
   { icon: Blocks, label: "Extensions" },
-  { icon: ShieldAlert, label: "GDPR Scanner", active: false, alert: true },
 ];
 
 const bottomIcons = [

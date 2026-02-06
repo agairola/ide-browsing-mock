@@ -51,6 +51,36 @@
   }
 }
 
+/* macOS Desktop Wallpaper */
+.desktop-wallpaper {
+  background: linear-gradient(
+    135deg,
+    #0a0a1a 0%,
+    #0d1025 15%,
+    #1a1040 35%,
+    #1e0f45 50%,
+    #0f1a3d 65%,
+    #0a2040 80%,
+    #081830 100%
+  );
+}
+
+/* Window appear animation */
+.window-appear {
+  animation: windowAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes windowAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 /* Animations */
 @keyframes typingCursor {
   0%, 100% { opacity: 1; }
