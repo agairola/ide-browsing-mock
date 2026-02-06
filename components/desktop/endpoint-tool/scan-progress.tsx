@@ -20,18 +20,18 @@ export function ScanProgress() {
   const done = completedSteps >= TOTAL_STEPS;
 
   return (
-    <div className="px-4 py-2.5 border-b border-[hsl(170,20%,15%)]">
+    <div className="px-4 py-2.5 border-b border-[hsl(170,20%,15%)]/30">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] font-medium text-[hsl(170,20%,50%)] uppercase tracking-wider">
+        <span className={`text-[10px] font-medium uppercase tracking-wider ${done ? "text-[hsl(170,20%,50%)]" : "shimmer-text"}`}>
           {done ? "Scan Complete" : "Scanning..."}
         </span>
         <span className={`text-[11px] font-bold tabular-nums ${done ? "text-[hsl(0,72%,65%)]" : "text-[#06d6a0]"}`}>
           {pct}%
         </span>
       </div>
-      <div className="h-1.5 bg-[hsl(170,15%,12%)] rounded-full overflow-hidden">
+      <div className="h-1.5 bg-[hsl(170,15%,12%)]/30 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-700 ease-out"
+          className={`h-full rounded-full transition-all duration-700 ease-out relative ${!done ? "shimmer-bar" : ""}`}
           style={{
             width: `${pct}%`,
             background: done

@@ -1,33 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ShieldAlert } from "lucide-react";
 import {
-  ShieldAlert,
-  Lock,
-  Eye,
-  Database,
-  Mail,
-  UserX,
-} from "lucide-react";
+  Tool,
+  ToolHeader,
+  ToolContent,
+  ToolOutput,
+  type ToolState,
+} from "@/components/ai-elements/tool";
 
-interface GdprAlert {
+interface ToolAlert {
   id: string;
   severity: "critical" | "high" | "medium";
   title: string;
   article: string;
   lines: string;
-  icon: typeof ShieldAlert;
+  toolName: string;
+  input: Record<string, unknown>;
   delay: number;
 }
 
-const alerts: GdprAlert[] = [
+const OUTPUT_DELAY_MS = 1000;
+
+const alerts: ToolAlert[] = [
   {
     id: "secrets",
     severity: "critical",
     title: "Hardcoded Credentials Detected",
     article: "Art. 32 - Security of Processing",
     lines: "L5-7",
-    icon: Lock,
+    toolName: "detectSecrets()",
+    input: { target: "L5-7", pattern: "hardcoded_credentials" },
     delay: 4.5,
   },
   {
@@ -36,7 +40,8 @@ const alerts: GdprAlert[] = [
     title: "PII Logged to Console",
     article: "Art. 5(1)(f) - Integrity & Confidentiality",
     lines: "L23-24",
-    icon: Eye,
+    toolName: "scanPiiExposure()",
+    input: { target: "L23-24", dataTypes: ["SSN", "CC"] },
     delay: 10.5,
   },
   {
@@ -45,7 +50,8 @@ const alerts: GdprAlert[] = [
     title: "PII Stored in localStorage",
     article: "Art. 32 - Security of Processing",
     lines: "L27-28",
-    icon: Database,
+    toolName: "checkStorageSecurity()",
+    input: { target: "L27-28", storage: "localStorage" },
     delay: 12,
   },
   {
@@ -54,7 +60,8 @@ const alerts: GdprAlert[] = [
     title: "No Consent Before Marketing Email",
     article: "Art. 7 - Conditions for Consent",
     lines: "L31",
-    icon: Mail,
+    toolName: "verifyConsent()",
+    input: { target: "L31", action: "marketing_email" },
     delay: 15,
   },
   {
@@ -63,87 +70,102 @@ const alerts: GdprAlert[] = [
     title: "Right to Erasure Not Implemented",
     article: "Art. 17 - Right to Erasure",
     lines: "L37-38",
-    icon: UserX,
+    toolName: "checkDataRetention()",
+    input: { target: "L37-38", operation: "deleteUser" },
     delay: 16.5,
   },
 ];
 
 const severityConfig = {
-  critical: {
-    border: "border-l-[hsl(0,72%,45%)]",
-    badge: "bg-[hsl(0,72%,51%)] text-white",
-    icon: "text-[hsl(0,72%,65%)]",
-    iconBg: "bg-[hsla(0,72%,51%,0.12)]",
-    label: "CRIT",
-  },
-  high: {
-    border: "border-l-[hsl(30,100%,45%)]",
-    badge: "bg-[hsl(30,100%,50%)] text-[hsl(220,14%,10%)]",
-    icon: "text-[hsl(30,100%,65%)]",
-    iconBg: "bg-[hsla(30,100%,50%,0.12)]",
-    label: "HIGH",
-  },
-  medium: {
-    border: "border-l-[hsl(45,100%,45%)]",
-    badge: "bg-[hsl(45,100%,50%)] text-[hsl(220,14%,10%)]",
-    icon: "text-[hsl(45,100%,65%)]",
-    iconBg: "bg-[hsla(45,100%,50%,0.12)]",
-    label: "MED",
-  },
+  critical: { badge: "bg-[hsl(0,72%,51%)] text-white", label: "CRIT" },
+  high: { badge: "bg-[hsl(30,100%,50%)] text-[hsl(220,14%,10%)]", label: "HIGH" },
+  medium: { badge: "bg-[hsl(45,100%,50%)] text-[hsl(220,14%,10%)]", label: "MED" },
 };
 
+interface AlertState {
+  visible: boolean;
+  toolState: ToolState;
+}
+
 export function AlertCards() {
-  const [visibleAlerts, setVisibleAlerts] = useState<string[]>([]);
+  const [alertStates, setAlertStates] = useState<Record<string, AlertState>>({});
 
   useEffect(() => {
-    const timers = alerts.map((alert) =>
-      setTimeout(() => {
-        setVisibleAlerts((prev) => [...prev, alert.id]);
-      }, alert.delay * 1000)
-    );
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    alerts.forEach((alert) => {
+      // Show as input-streaming at delay
+      timers.push(
+        setTimeout(() => {
+          setAlertStates((prev) => ({
+            ...prev,
+            [alert.id]: { visible: true, toolState: "input-streaming" },
+          }));
+        }, alert.delay * 1000)
+      );
+
+      // Transition to output-available after OUTPUT_DELAY_MS
+      timers.push(
+        setTimeout(() => {
+          setAlertStates((prev) => ({
+            ...prev,
+            [alert.id]: { visible: true, toolState: "output-available" },
+          }));
+        }, alert.delay * 1000 + OUTPUT_DELAY_MS)
+      );
+    });
+
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const activeAlerts = alerts.filter((a) => visibleAlerts.includes(a.id));
+  const activeAlerts = alerts.filter((a) => alertStates[a.id]?.visible);
 
   if (activeAlerts.length === 0) return null;
 
   return (
     <div className="px-3 py-2 flex-shrink-0">
       <div className="text-[9px] font-semibold text-[hsl(170,20%,40%)] uppercase tracking-wider px-1 mb-1.5">
-        Alerts ({activeAlerts.length})
+        Tool Calls ({activeAlerts.length})
       </div>
-      <div className="space-y-1.5 max-h-[180px] overflow-auto">
+      <div className="space-y-1.5">
         {activeAlerts.map((alert) => {
+          const state = alertStates[alert.id]!;
           const config = severityConfig[alert.severity];
+          const isComplete = state.toolState === "output-available";
+
           return (
             <div
               key={alert.id}
-              className={`bg-[hsl(170,15%,7%)] border border-[hsl(170,15%,14%)] border-l-2 ${config.border} rounded-md p-2`}
               style={{ animation: "slideInFromRight 0.35s ease-out" }}
             >
-              <div className="flex items-start gap-2">
-                <div className={`mt-0.5 p-1 rounded ${config.iconBg} shrink-0`}>
-                  <alert.icon className={`w-3 h-3 ${config.icon}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${config.badge}`}>
-                      {config.label}
-                    </span>
-                    <span className="text-[9px] text-[hsl(170,20%,45%)] font-mono">
-                      {alert.lines}
-                    </span>
-                  </div>
-                  <h4 className="text-[10px] font-semibold text-[hsl(170,30%,80%)] leading-tight">
-                    {alert.title}
-                  </h4>
-                  <div className="flex items-center gap-1 mt-1 text-[8px] text-[hsl(170,20%,45%)]">
-                    <ShieldAlert className="w-2.5 h-2.5" />
-                    <span>{alert.article}</span>
-                  </div>
-                </div>
-              </div>
+              <Tool open={true}>
+                <ToolHeader title={alert.toolName} state={state.toolState} />
+                <ToolContent>
+                  {isComplete && (
+                    <ToolOutput
+                      output={
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${config.badge}`}>
+                              {config.label}
+                            </span>
+                            <span className="text-[9px] text-[hsl(170,20%,45%)] font-mono">
+                              {alert.lines}
+                            </span>
+                          </div>
+                          <div className="text-[10px] font-semibold text-[hsl(170,30%,80%)] leading-tight">
+                            {alert.title}
+                          </div>
+                          <div className="flex items-center gap-1 text-[8px] text-[hsl(170,20%,45%)]">
+                            <ShieldAlert className="w-2.5 h-2.5" />
+                            <span>{alert.article}</span>
+                          </div>
+                        </div>
+                      }
+                    />
+                  )}
+                </ToolContent>
+              </Tool>
             </div>
           );
         })}

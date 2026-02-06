@@ -9,7 +9,7 @@ export function WindowChrome({ title, icon, variant = "ide" }: WindowChromeProps
     <div
       className={`flex items-center h-[38px] px-3.5 select-none shrink-0 ${
         variant === "tool"
-          ? "bg-[hsl(170,20%,8%)] border-b border-[hsl(170,20%,15%)]"
+          ? "bg-[hsl(170,20%,8%)]/40 backdrop-blur-xl border-b border-[hsl(170,20%,15%)]/40"
           : "bg-[hsl(220,14%,8%)] border-b border-[hsl(220,14%,18%)]"
       }`}
     >

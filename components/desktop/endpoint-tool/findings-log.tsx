@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface LogLine {
   text: string;
   color: string;
   delay: number;
 }
+
+const CHAR_DELAY_MS = 25;
 
 const logOutput: LogLine[] = [
   { text: "$ gdpr-scan --target user-service.ts", color: "hsl(170,20%,55%)", delay: 0 },
@@ -41,33 +43,91 @@ const logOutput: LogLine[] = [
   { text: "[done] GDPR compliance: FAIL", color: "hsl(0,72%,65%)", delay: 18 },
 ];
 
+interface LineState {
+  lineIndex: number;
+  charCount: number;
+  complete: boolean;
+}
+
 export function FindingsLog() {
-  const [visibleLines, setVisibleLines] = useState(0);
+  const [lines, setLines] = useState<LineState[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timers = logOutput.map((line, i) =>
-      setTimeout(() => setVisibleLines(i + 1), line.delay * 1000)
-    );
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    logOutput.forEach((line, i) => {
+      // Start revealing this line at its delay
+      timers.push(
+        setTimeout(() => {
+          if (!line.text) {
+            // Empty line — add immediately as complete
+            setLines((prev) => [...prev, { lineIndex: i, charCount: 0, complete: true }]);
+            return;
+          }
+
+          // Add line with 0 chars
+          setLines((prev) => [...prev, { lineIndex: i, charCount: 0, complete: false }]);
+
+          // Stream characters
+          const chars = line.text.length;
+          for (let c = 1; c <= chars; c++) {
+            timers.push(
+              setTimeout(() => {
+                setLines((prev) =>
+                  prev.map((l) =>
+                    l.lineIndex === i
+                      ? { ...l, charCount: c, complete: c >= chars }
+                      : l
+                  )
+                );
+              }, c * CHAR_DELAY_MS)
+            );
+          }
+        }, line.delay * 1000)
+      );
+    });
+
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [lines]);
+
+  const currentStreamingIndex = lines.length > 0 && !lines[lines.length - 1].complete
+    ? lines[lines.length - 1].lineIndex
+    : -1;
 
   return (
     <div className="px-3 py-2 flex-1 min-h-0 overflow-hidden">
       <div className="text-[9px] font-semibold text-[hsl(170,20%,40%)] uppercase tracking-wider px-1 mb-1.5">
         Findings Log
       </div>
-      <div className="h-full overflow-auto rounded-md bg-[hsl(170,15%,5%)] border border-[hsl(170,15%,12%)] p-2 font-mono text-[10px] leading-4">
-        {logOutput.slice(0, visibleLines).map((line, i) => (
-          <div
-            key={`log-${i}`}
-            style={{
-              color: line.color || "transparent",
-              animation: "slideInFromLeft 0.2s ease-out",
-            }}
-          >
-            {line.text || "\u00A0"}
-          </div>
-        ))}
+      <div
+        ref={scrollRef}
+        className="h-full overflow-auto rounded-md bg-[hsl(170,15%,5%)] border border-[hsl(170,15%,12%)] p-2 font-mono text-[10px] leading-4"
+      >
+        {lines.map((ls) => {
+          const line = logOutput[ls.lineIndex];
+          const isStreaming = ls.lineIndex === currentStreamingIndex;
+          const displayText = line.text ? line.text.slice(0, ls.charCount) : "\u00A0";
+
+          return (
+            <div
+              key={`log-${ls.lineIndex}`}
+              className={isStreaming ? "streaming-line" : ""}
+              style={{
+                color: line.color || "transparent",
+              }}
+            >
+              {displayText}
+            </div>
+          );
+        })}
         <span
           className="inline-block w-1.5 h-3 bg-[#06d6a0] ml-0.5"
           style={{ animation: "typingCursor 1s step-end infinite" }}
